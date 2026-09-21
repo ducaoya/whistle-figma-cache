@@ -1,0 +1,45 @@
+{
+  "name": "whistle.figma-cache",
+  "version": "1.0.0",
+  "description": "Figma 客户端静态资源磁盘缓存：绕过 Chromium HTTP 缓存配额（~80MB）导致的反复驱逐，只缓存 content-hash 命名的不可变资源，绝不触碰画布数据 / API / WebSocket",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "lib/",
+    "rules.txt",
+    "public/",
+    "README.md",
+    "AGENTS.md"
+  ],  "scripts": {
+    "test": "node test/policy.test.js && node test/store.test.js && node test/hooks.test.js && node test/revalidate.test.js",
+    "test:policy": "node test/policy.test.js",
+    "test:store": "node test/store.test.js",
+    "test:hooks": "node test/hooks.test.js",
+    "test:swr": "node test/revalidate.test.js",
+    "link": "npm link",
+    "unlink": "npm unlink -g whistle.figma-cache"
+  },
+  "keywords": [
+    "whistle",
+    "whistle-plugin",
+    "figma",
+    "cache",
+    "proxy"
+  ],
+  "author": "whistle-figma-cache contributors",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "whistleConfig": {
+    "priority": 0,
+    "hintList": [
+      "figma-cache://",
+      "figma-cache://revalidate=7d",
+      "figma-cache://revalidate=0",
+      "figma-cache://revalidate=-1",
+      "figma-cache://maxSize=8192,revalidate=24h",
+      "figma-cache://log=1"
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  whistle.figma-cache —— 内置规则
+# ═══════════════════════════════════════════════════════════════════════════
+#  本文件由插件自动加载：
+#    · 插件「启用」时自动生效，无需在 Rules 面板做任何配置
+#    · 插件「禁用」时不再加载，所有能力立即失效
+#
+#  匹配范围刻意收得极窄 —— 只有下面两类 URL 会进入本插件。
+#  画布数据、文件内容、GraphQL / REST API、WebSocket、图片素材
+#  全都不在匹配范围内，完全不受影响（原样透传，零改动）。
+#
+#  第二道闸门在 lib/policy.js：即使规则意外命中，只要 URL 不是
+#  「内容哈希命名」的不可变资源，也会被拒绝并原样透传。
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ① Figma 编辑器 JS/CSS bundle（webpack [contenthash] 命名，内容不可变）
+#    例：https://www.figma.com/webpack-artifacts/assets/vendor-1d532d39d96c5d27.min.js.br
+www.figma.com/webpack-artifacts/  whistle.figma-cache://
+
+# ② Figma 自有静态 CDN 的 content-addressed 资源（字体 / 图标等）
+#    例：https://static.figma.com/uploads/<40 位内容哈希>
+static.figma.com/uploads/         whistle.figma-cache://
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  ✖ 以下域名/路径【严禁】加入本插件，否则会导致 Figma 白屏或拿不到最新数据：
+#
+#    www.figma.com/api/...            GraphQL / REST 接口（文件内容、样式、版本）
+#    www.figma.com/file|design/...    画布与文件数据
+#    s3-alpha.figma.com              用户内容（画布图片、素材）
+#    s3-alpha-sig.figma.com          带签名的临时地址（会过期）
+#    wss://...                        multiplayer 实时协作长连接
+#
+# 'lib/policy.js' 里已对上述目标做了硬性拒绝，作为双保险。
+# ═══════════════════════════════════════════════════════════════════════════
