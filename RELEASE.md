@@ -72,10 +72,29 @@ git push origin master
 
 工作流执行顺序：
 `npm test` → 校验插件能否被 `require` 并导出钩子 → 读取 `name@version` →
-检查该版本是否已在 npm（已存在则提示并跳过）→ `npm publish`
+检查该版本是否已在 npm（已存在则提示并跳过）→ `npm publish --provenance`
 
 > 本地还有一道保险：`package.json` 配了 `"prepublishOnly": "npm test"`，
 > 手动 `npm publish` 时也会先跑测试。
+
+### 发布成功后 npm 上会先显示 Validating
+
+`npm publish` 返回 `+ <包名>@<版本>` **就算发布成功了**，但 npm 还会对新版本跑一轮安全扫描，
+期间：
+
+- npm 网页的 **Versions** 列表里该版本状态是黄色的 **`Validating`**（不是失败）
+- `registry.npmjs.org/<包名>/<版本>` 会返回 **404**，`npm i` 也装不到
+- npm 自己的提示是「Your package is being processed and may take a few minutes to become available」
+
+等几分钟后会变成绿色的 `Published`，registry 随即可用。
+
+**判断发布是否真的成功，看 Actions 日志里有没有这三行，而不是看 registry 是否已经能拉到：**
+
+```
+npm notice publish Signed provenance statement with source and build information from GitHub Actions
+npm notice publish Provenance statement published to transparency log: https://search.sigstore.dev/?logIndex=...
++ whistle.figma-cache@x.y.z
+```
 
 ### 发布方式：npm Trusted Publishing（OIDC，无需 token）
 
