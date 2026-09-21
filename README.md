@@ -1,8 +1,12 @@
 # whistle.figma-cache
 
+[![npm version](https://img.shields.io/npm/v/whistle.figma-cache.svg)](https://www.npmjs.com/package/whistle.figma-cache)
+[![license](https://img.shields.io/npm/l/whistle.figma-cache.svg)](./LICENSE)
+
 给 **Figma 桌面客户端**加一层**磁盘缓存**，消除每次刷新都重复下载的静态资源。
 
 > 实现细节、踩坑记录、调试手册见 **[AGENTS.md](./AGENTS.md)**（供 AI / 后续维护者阅读）。
+> 开发与发布流程见 **[RELEASE.md](./RELEASE.md)**。
 
 ## 它解决什么
 
@@ -15,6 +19,33 @@ Figma 编辑器每次刷新都要重新拉取**数十 MB** 的 JS / WASM / 字�
 - Electron 升级会更换 profile 目录，**上一次的缓存全部作废**。
 
 本插件把缓存放到自己的磁盘目录里：不设 80 MB 上限，不受 Electron 版本影响，命中后由本地磁盘回放。
+
+## 安装
+
+### 从 npm（推荐）
+
+```bash
+w2 i whistle.figma-cache
+w2 restart
+```
+
+或者先全局安装再让 whistle 启动时发现：
+
+```bash
+npm i -g whistle.figma-cache
+w2 restart
+```
+
+### 从源码（开发用）
+
+```bash
+git clone https://github.com/ducaoya/whistle-figma-cache.git
+cd whistle-figma-cache
+npm link        # 在 whistle 的全局 node_modules 里建立同名符号链接
+w2 restart
+```
+
+装好后在 whistle 的 **Plugins** 面板应能看到 `figma-cache`。
 
 ## 使用方式
 

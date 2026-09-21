@@ -1,7 +1,7 @@
 {
   "name": "whistle.figma-cache",
   "version": "1.0.0",
-  "description": "Figma 客户端静态资源磁盘缓存：绕过 Chromium HTTP 缓存配额（~80MB）导致的反复驱逐，只缓存 content-hash 命名的不可变资源，绝不触碰画布数据 / API / WebSocket",
+  "description": "Figma 客户端静态资源磁盘缓存：只缓存 content-hash 命名的不可变资源，命中即由本地磁盘回放，绝不触碰画布数据 / API / WebSocket",
   "main": "index.js",
   "files": [
     "index.js",
@@ -9,13 +9,16 @@
     "rules.txt",
     "public/",
     "README.md",
-    "AGENTS.md"
-  ],  "scripts": {
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "scripts": {
     "test": "node test/policy.test.js && node test/store.test.js && node test/hooks.test.js && node test/revalidate.test.js",
     "test:policy": "node test/policy.test.js",
     "test:store": "node test/store.test.js",
     "test:hooks": "node test/hooks.test.js",
     "test:swr": "node test/revalidate.test.js",
+    "prepublishOnly": "npm test",
     "link": "npm link",
     "unlink": "npm unlink -g whistle.figma-cache"
   },
@@ -24,12 +27,25 @@
     "whistle-plugin",
     "figma",
     "cache",
-    "proxy"
+    "proxy",
+    "cdn"
   ],
-  "author": "whistle-figma-cache contributors",
+  "author": "ducaoya",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ducaoya/whistle-figma-cache.git"
+  },
+  "homepage": "https://github.com/ducaoya/whistle-figma-cache#readme",
+  "bugs": {
+    "url": "https://github.com/ducaoya/whistle-figma-cache/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=14"
   },
   "whistleConfig": {
     "priority": 0,

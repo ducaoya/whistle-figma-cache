@@ -1,0 +1,85 @@
+name: Publish to npm
+
+# 触发条件（两个条件同时满足才会发布）：
+#   1. 推送到 master 分支
+#   2. 提交信息中包含【release】标识
+#
+# 发布方式：npm Trusted Publishing (OIDC) —— 不需要任何 token / secret。
+# 前置：在 npm 包设置里配置 Trusted Publisher：
+#   Organization or user = ducaoya
+#   Repository           = whistle-figma-cache
+#   Workflow filename    = publish.yml
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  id-token: write # 允许 Actions 签发 OIDC token，供 npm 换取短期发布凭据
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: contains(github.event.head_commit.message, '【release】')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Ensure npm supports OIDC trusted publishing
+        run: |
+          npm install -g npm@latest
+          echo "node: $(node -v) / npm: $(npm -v)"
+
+      - name: Verify OIDC is available
+        run: |
+          if [ -z "$ACTIONS_ID_TOKEN_REQUEST_URL" ]; then
+            echo "::error::缺少 id-token: write 权限，无法使用 trusted publishing"
+            exit 1
+          fi
+          echo "OIDC 可用"
+
+      - name: Run tests
+        run: npm test
+
+      - name: Verify the plugin can be loaded
+        run: |
+          node -e "
+            const p = require('./index.js');
+            const hooks = Object.keys(p);
+            console.log('导出的 whistle 钩子:', hooks.join(', '));
+            if (!hooks.length) { throw new Error('插件没有导出任何钩子'); }
+          "
+
+      - name: Read package version
+        id: pkg
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "本次待发布：$NAME@$VERSION"
+
+      - name: Check whether the version is already published
+        id: check
+        run: |
+          if npm view "${{ steps.pkg.outputs.name }}@${{ steps.pkg.outputs.version }}" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::${{ steps.pkg.outputs.name }}@${{ steps.pkg.outputs.version }} 已存在于 npm，跳过发布"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm (trusted publishing, no token)
+        if: steps.check.outputs.exists == 'false'
+        run: npm publish
