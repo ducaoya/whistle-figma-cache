@@ -1,6 +1,6 @@
 {
   "name": "whistle.figma-cache",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Figma 客户端静态资源磁盘缓存：只缓存 content-hash 命名的不可变资源，命中即由本地磁盘回放，绝不触碰画布数据 / API / WebSocket",
   "main": "index.js",
   "files": [
