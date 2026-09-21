@@ -82,4 +82,7 @@ jobs:
 
       - name: Publish to npm (trusted publishing, no token)
         if: steps.check.outputs.exists == 'false'
-        run: npm publish
+        # 显式带上 --provenance：
+        # 官方文档说 OIDC 发布会自动生成来源证明，但实测有人需要显式指定，
+        # 加上它两种情况都能工作。
+        run: npm publish --provenance

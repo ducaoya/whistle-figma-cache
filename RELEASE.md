@@ -83,21 +83,37 @@ npm 已永久吊销全部 classic token（2025-12-09），带直接发布能力�
 因此本仓改用 **OIDC 可信发布**：工作流用 GitHub 签发的短期凭据发布，**不需要任何 secret**。
 
 前置（每个包在 npm 网页上配一次）：
-`https://www.npmjs.com/package/whistle.figma-cache/access` → **Trusted Publisher** → GitHub Actions
 
-| 字段 | 值 |
-| --- | --- |
-| Organization or user | `ducaoya` |
-| Repository | `whistle-figma-cache` |
-| Workflow filename | `publish.yml`（只填文件名，大小写敏感） |
-| Environment name | 留空 |
+打开 `https://www.npmjs.com/package/whistle.figma-cache/access`
+（或 Packages → 选包 → **Settings** → **Trusted publishing**），
+在 **Trusted Publisher** 区块点 **Select your publisher** → **GitHub Actions**，填：
+
+| 字段 | 值 | 说明 |
+| --- | --- | --- |
+| Organization or user | `ducaoya` | GitHub 用户名，不带 `@` |
+| Repository | `whistle-figma-cache` | 只填仓库名，不填完整 URL |
+| Workflow filename | `publish.yml` | **只填文件名**，含 `.yml`，不能写 `.github/workflows/publish.yml` |
+| Environment name | 留空 | 若填了，工作流必须声明同名 `environment:`，否则鉴权失败 |
+| **Allowed actions** | 勾选 **`npm publish`** | ⚠️ **2026-05-20 之后创建的配置必须显式勾选，至少选一项，否则发布报错** |
+
+填完记得点保存。一个包同时只能配一个 Trusted Publisher；字段全部大小写敏感，
+必须与 GitHub 完全一致——**npm 不会在你保存时校验，写错了只会到发布时才报
+「Unable to authenticate (ENEEDAUTH)」**。
 
 工作流侧需满足：
 
 - `permissions.id-token: write`（否则 OIDC 不可用）
-- npm ≥ 11.5.1（Node 22 自带 10.x，工作流里用 `npm install -g npm@latest` 提升）
-- `package.json` 的 `repository.url` 必须与 GitHub 仓库一致
-- 必须使用 GitHub 托管 runner（不支持自建）
+- npm ≥ 11.5.1、Node ≥ 22.14.0（Node 22 自带 npm 10.x，工作流里用 `npm install -g npm@latest` 提升）
+- `package.json` 的 `repository.url` 必须与 GitHub 仓库完全一致
+- 必须使用 **GitHub 托管 runner**（`ubuntu-latest`），不支持自建 runner
+- **不要**设 `NODE_AUTH_TOKEN` —— 有 token 时 npm 可能不走 OIDC，掩盖配置错误
+
+### 配完建议收尾：禁止 token 发布
+
+`Settings` → **Publishing access** → 选 **"Require two-factor authentication and disallow tokens"**
+→ 点 **Update Package Settings**。
+
+这会把传统 token 发布关掉，但**不影响** Trusted Publisher（它走 OIDC，不是 token）。
 
 ### 首版必须手动发布一次
 
@@ -137,6 +153,17 @@ npm pack --dry-run                              # 查看将要发布的内容（
 node -p "require('./package.json').name+'@'+require('./package.json').version"
 npm view whistle.figma-cache@<version> version  # 有输出=该版本已存在，需先上调 version
 ```
+
+## 排障：发布失败对照表
+
+| 报错 | 原因 | 处理 |
+| --- | --- | --- |
+| `Unable to authenticate (ENEEDAUTH)` | Trusted Publisher 的仓库 / workflow 文件名 / 大小写与 GitHub 不一致 | 逐个字符比对 npm 页面上的值与实际仓库 |
+| 同上，但字段都对 | 未勾选 Allowed actions，或用了自建 runner | 勾上 `npm publish`；改用 `ubuntu-latest` |
+| `EINVALIDNPMTOKEN` | `setup-node` 的 `registry-url` 生成了带空 `_authToken` 的 `.npmrc` | 删掉 `setup-node` 的 `registry-url`（工作流里试过，不行再删） |
+| `EOTP` | 还在走 token 鉴权，或 Trusted Publisher 没保存 | 确认 `id-token: write` 有、不设 `NODE_AUTH_TOKEN`、配置已保存 |
+| `EBADENGINE` | Node 版本过低 | 用 22 / 24 |
+| 发布成功但没有 provenance 绿标 | 未生成来源证明 | 工作流已在 `npm publish` 后加了 `--provenance` |
 
 ## 与 whistle-sse-viewer 的配置差异
 
